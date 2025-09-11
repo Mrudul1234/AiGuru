@@ -2,7 +2,7 @@
 
 ## Project info
 
-**URL**: https://lovable.dev/projects/779a48af-2224-425e-b1c0-f777d81763cd
+**URL**: https://aiguru-71.lovable.app
 
 ## How can I edit this code?
 
