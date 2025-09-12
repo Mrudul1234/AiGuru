@@ -14,7 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      conversations: {
+        Row: {
+          created_at: string
+          error_message: string | null
+          id: string
+          is_user: boolean
+          language: string | null
+          message: string
+          session_id: string
+          success: boolean | null
+          timestamp: string
+        }
+        Insert: {
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          is_user: boolean
+          language?: string | null
+          message: string
+          session_id?: string
+          success?: boolean | null
+          timestamp?: string
+        }
+        Update: {
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          is_user?: boolean
+          language?: string | null
+          message?: string
+          session_id?: string
+          success?: boolean | null
+          timestamp?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

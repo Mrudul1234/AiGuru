@@ -9,6 +9,7 @@ import { ApiKeyModal } from "./ApiKeyModal";
 import { Send, FileText, X, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { detectLanguage, generateResponse, speakText, translateText, checkUsageLimit, setApiKey } from "@/services/aiService";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Message {
   id: string;
@@ -36,6 +37,7 @@ export function ChatInterface() {
   const [usageInfo, setUsageInfo] = useState({ canUse: true, remaining: 4 });
   const [showApiKeyModal, setShowApiKeyModal] = useState(false);
   const [isLimitExceeded, setIsLimitExceeded] = useState(false);
+  const [sessionId] = useState(() => crypto.randomUUID());
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -48,6 +50,22 @@ export function ChatInterface() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
+  // Function to save conversation to database
+  const saveConversation = async (message: string, isUser: boolean, language: string = 'en', success: boolean = true, errorMessage?: string) => {
+    try {
+      await supabase.from('conversations').insert({
+        session_id: sessionId,
+        message,
+        is_user: isUser,
+        language,
+        success,
+        error_message: errorMessage
+      });
+    } catch (error) {
+      console.error('Failed to save conversation:', error);
+    }
+  };
+
   const addMessage = (text: string, isUser: boolean, language: string = 'en') => {
     const newMessage: Message = {
       id: Date.now().toString(),
@@ -58,6 +76,10 @@ export function ChatInterface() {
     };
     setMessages(prev => [...prev, newMessage]);
     setShowWelcome(false);
+    
+    // Save to database
+    saveConversation(text, isUser, language);
+    
     return newMessage;
   };
 
@@ -121,28 +143,25 @@ export function ChatInterface() {
     } catch (error: any) {
       console.error('Error generating response:', error);
       
+      const errorText = error.message === 'LIMIT_EXCEEDED' || error.message === 'API_QUOTA_EXCEEDED' 
+        ? "Daily usage limit reached. Please enter a new API key to continue chatting."
+        : error.message === 'INVALID_API_KEY'
+        ? "Invalid API key. Please enter a valid Gemini API key."
+        : "Sorry, I encountered an error processing your request. Please try again.";
+      
+      // Save error conversation with success=false
+      await saveConversation(errorText, false, detectedLang, false, error.message);
+      
       if (error.message === 'LIMIT_EXCEEDED' || error.message === 'API_QUOTA_EXCEEDED') {
         setIsLimitExceeded(true);
         setShowApiKeyModal(true);
-        addMessage(
-          "Daily usage limit reached. Please enter a new API key to continue chatting.", 
-          false, 
-          detectedLang
-        );
+        addMessage(errorText, false, detectedLang);
       } else if (error.message === 'INVALID_API_KEY') {
         setIsLimitExceeded(false);
         setShowApiKeyModal(true);
-        addMessage(
-          "Invalid API key. Please enter a valid Gemini API key.", 
-          false, 
-          detectedLang
-        );
+        addMessage(errorText, false, detectedLang);
       } else {
-        addMessage(
-          "Sorry, I encountered an error processing your request. Please try again.", 
-          false, 
-          detectedLang
-        );
+        addMessage(errorText, false, detectedLang);
       }
     } finally {
       setIsLoading(false);
@@ -222,6 +241,14 @@ export function ChatInterface() {
             >
               <Settings className="h-3 w-3 mr-1" />
               API Key
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => window.open('/admin', '_blank')}
+              className="h-8 px-3 text-xs text-muted-foreground hover:text-white"
+            >
+              Admin
             </Button>
             <div className="flex items-center gap-2">
               <div className="w-2 h-2 rounded-full bg-green-500"></div>
