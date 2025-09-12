@@ -32,12 +32,9 @@ export default function AdminDashboard() {
       const startDate = new Date();
       startDate.setDate(endDate.getDate() - dateRange);
 
-      // Fetch all conversations within date range
+      // Fetch all conversations using the secure admin function
       const { data: conversations, error } = await supabase
-        .from('conversations')
-        .select('*')
-        .gte('created_at', startDate.toISOString())
-        .lte('created_at', endDate.toISOString());
+        .rpc('get_all_conversations_admin');
 
       if (error) throw error;
 

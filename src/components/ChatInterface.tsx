@@ -53,13 +53,17 @@ export function ChatInterface() {
   // Function to save conversation to database
   const saveConversation = async (message: string, isUser: boolean, language: string = 'en', success: boolean = true, errorMessage?: string) => {
     try {
+      // Get current user session
+      const { data: { user } } = await supabase.auth.getUser();
+      
       await supabase.from('conversations').insert({
         session_id: sessionId,
         message,
         is_user: isUser,
         language,
         success,
-        error_message: errorMessage
+        error_message: errorMessage,
+        user_id: user?.id // Add user_id for proper RLS
       });
     } catch (error) {
       console.error('Failed to save conversation:', error);

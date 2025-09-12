@@ -25,6 +25,7 @@ export type Database = {
           session_id: string
           success: boolean | null
           timestamp: string
+          user_id: string | null
         }
         Insert: {
           created_at?: string
@@ -36,6 +37,7 @@ export type Database = {
           session_id?: string
           success?: boolean | null
           timestamp?: string
+          user_id?: string | null
         }
         Update: {
           created_at?: string
@@ -47,6 +49,7 @@ export type Database = {
           session_id?: string
           success?: boolean | null
           timestamp?: string
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -55,7 +58,20 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_all_conversations_admin: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          created_at: string
+          error_message: string
+          id: string
+          is_user: boolean
+          language: string
+          message: string
+          session_id: string
+          success: boolean
+          user_id: string
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never
